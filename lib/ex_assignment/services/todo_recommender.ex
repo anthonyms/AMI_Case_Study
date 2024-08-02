@@ -34,7 +34,7 @@ defmodule ExAssignment.Services.TodoRecommender do
         |> Enum.reject(fn todo -> todo.done end)
         |> Enum.map(fn todo -> %{todo | inverse_priority: compute_inverse_priority(todo.priority)} end)
         |> Enum.reduce(%{}, fn todo, acc -> Map.put(acc, todo, todo.inverse_priority) end)
-        |> Sampler.sample
+        |> Sampler.sample()
     end
   end
 

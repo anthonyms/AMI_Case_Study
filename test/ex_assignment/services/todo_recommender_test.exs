@@ -53,6 +53,23 @@ defmodule ExAssignment.Services.TodoRecommenderTest do
 
       assert Recommender.recommend([todo]) == todo
     end
+
+    test "tasks with lower priorities are more likely to be picked" do
+      todos = for n <- 1..10 do
+        todo_fixture(%{priority: n * 10, done: false})
+      end
+
+      frequencies = Stream.repeatedly(fn -> Recommender.recommend(todos) end)
+                    |> Enum.take(100)
+                    |> Enum.frequencies()
+                    |> Enum.to_list()
+
+      first_todo = frequencies |> List.first
+      last_todo = frequencies |> List.last
+
+      assert elem(first_todo,0).id < elem(last_todo,0).id
+      assert elem(first_todo,1) > elem(last_todo,1)
+    end
   end
 
   defp assign_inverted_priority(todo) do

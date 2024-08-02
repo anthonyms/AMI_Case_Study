@@ -5,9 +5,6 @@ defmodule ExAssignmentWeb.TodoController do
   alias ExAssignment.Todos
   alias ExAssignment.Todos.Todo
 
-  alias ExAssignment.Services.TodoRecommender, as: Recommender
-
-
   def index(conn, _params) do
     open_todos = Todos.list_todos(:open)
     done_todos = Todos.list_todos(:done)
