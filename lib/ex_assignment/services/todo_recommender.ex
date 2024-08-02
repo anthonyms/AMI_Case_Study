@@ -20,6 +20,8 @@ defmodule ExAssignment.Services.TodoRecommender do
   # Since 0 is a valid priority, we add a small delta to avoid division by zero.
   @zero 0.0001
 
+  alias ExAssignment.Services.WeightBasedSampler, as: Sampler
+
   @doc """
   Returns the next todo recommended by the system.
 
@@ -31,8 +33,8 @@ defmodule ExAssignment.Services.TodoRecommender do
       todos -> todos
         |> Enum.reject(fn todo -> todo.done end)
         |> Enum.map(fn todo -> %{todo | inverse_priority: compute_inverse_priority(todo.priority)} end)
-        |> Enum.take_random(1)
-        |> List.first()
+        |> Enum.reduce(%{}, fn todo, acc -> Map.put(acc, todo, todo.inverse_priority) end)
+        |> Sampler.sample
     end
   end
 
@@ -40,7 +42,8 @@ defmodule ExAssignment.Services.TodoRecommender do
   # 1. Reject the task?
   # 2. Replace with a number close to 0? ✓
   # 3. Raise an error
-  defp compute_inverse_priority(priority) do
+  # This function is made public so that it can be used in tests.
+  def compute_inverse_priority(priority) do
     case priority do
       0 -> @zero
       _ -> 1.0 / priority

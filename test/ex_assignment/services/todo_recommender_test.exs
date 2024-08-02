@@ -19,5 +19,43 @@ defmodule ExAssignment.Services.TodoRecommenderTest do
       todos = [todo_fixture(@closed_attrs), todo_fixture(@closed_attrs)]
       assert Recommender.recommend(todos) == nil
     end
+
+    test "returns the single open todo when supplied with a list having only one open todo" do
+      open_todo = @open_attrs
+        |> todo_fixture()
+        |> assign_inverted_priority()
+
+      closed_todos = [todo_fixture(@closed_attrs), todo_fixture(@closed_attrs)]
+
+      recommended_todo = closed_todos
+        |> Enum.concat([open_todo])
+        |> Recommender.recommend()
+
+      assert recommended_todo == open_todo
+    end
+
+    test "does not return closed todos" do
+      open_todos = Enum.map([todo_fixture(@open_attrs), todo_fixture(@open_attrs)], fn todo -> assign_inverted_priority(todo) end)
+      closed_todos = [todo_fixture(@closed_attrs), todo_fixture(@closed_attrs)]
+
+      recommended_todo = closed_todos
+        |> Enum.concat(open_todos)
+        |> Recommender.recommend()
+
+      assert Enum.member?(open_todos, recommended_todo)
+      refute Enum.member?(closed_todos, recommended_todo)
+    end
+
+    test "does not error with zero priority" do
+      todo = @zero_priority_attrs
+        |> todo_fixture()
+        |> assign_inverted_priority()
+
+      assert Recommender.recommend([todo]) == todo
+    end
+  end
+
+  defp assign_inverted_priority(todo) do
+    %{todo | inverse_priority: Recommender.compute_inverse_priority(todo.priority)}
   end
 end
