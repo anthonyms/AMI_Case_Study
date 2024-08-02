@@ -7,7 +7,7 @@ defmodule ExAssignmentWeb.TodoController do
   def index(conn, _params) do
     open_todos = Todos.list_todos(:open)
     done_todos = Todos.list_todos(:done)
-    recommended_todo = Todos.get_recommended()
+    {:ok, conn, recommended_todo} = get_recommended_todo(conn)
 
     render(conn, :index,
       open_todos: open_todos,
@@ -61,6 +61,7 @@ defmodule ExAssignmentWeb.TodoController do
   def delete(conn, %{"id" => id}) do
     todo = Todos.get_todo!(id)
     {:ok, _todo} = Todos.delete_todo(todo)
+    {:ok, conn} = refresh_recommended(conn, id)
 
     conn
     |> put_flash(:info, "Todo deleted successfully.")
@@ -69,6 +70,7 @@ defmodule ExAssignmentWeb.TodoController do
 
   def check(conn, %{"id" => id}) do
     :ok = Todos.check(id)
+    {:ok, conn} = refresh_recommended(conn, id)
 
     conn
     |> redirect(to: ~p"/todos")
@@ -79,5 +81,36 @@ defmodule ExAssignmentWeb.TodoController do
 
     conn
     |> redirect(to: ~p"/todos")
+  end
+
+  @doc """
+  Get the recommended todo from the session or fetch a new one and save it in the session.
+    If there is no recommended todo return nil.
+  """
+  def get_recommended_todo(conn) do
+    case get_session(conn, :recommended) do
+      nil ->
+        case Todos.get_recommended() do
+          nil -> {:ok, conn, nil}
+          recommended ->
+            conn = put_session(conn, :recommended, Integer.to_string(recommended.id))
+            {:ok, conn, recommended}
+        end
+
+      recommended_id ->
+        recommended = Todos.get_todo!(recommended_id)
+        {:ok, conn, recommended}
+    end
+  end
+
+  @doc """
+  Remove the recommended todo from the session if it matches the given id.
+  """
+  defp refresh_recommended(conn, id) do
+    case get_session(conn, :recommended) do
+      nil -> {:ok, conn}
+      ^id ->  {:ok, delete_session(conn, :recommended)}
+      _ -> {:ok, conn}
+    end
   end
 end
