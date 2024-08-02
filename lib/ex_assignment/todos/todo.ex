@@ -5,6 +5,7 @@ defmodule ExAssignment.Todos.Todo do
   schema "todos" do
     field(:done, :boolean, default: false)
     field(:priority, :integer)
+    field(:inverse_priority, :integer, virtual: true)
     field(:title, :string)
 
     timestamps()
@@ -15,5 +16,6 @@ defmodule ExAssignment.Todos.Todo do
     todo
     |> cast(attrs, [:title, :priority, :done])
     |> validate_required([:title, :priority, :done])
+    |> validate_number(:priority, greater_than_or_equal_to: 0)
   end
 end

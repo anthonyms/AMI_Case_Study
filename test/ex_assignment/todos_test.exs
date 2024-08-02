@@ -9,6 +9,7 @@ defmodule ExAssignment.TodosTest do
     import ExAssignment.TodosFixtures
 
     @invalid_attrs %{done: nil, priority: nil, title: nil}
+    @invalid_priority %{title: "A hard task", done: false, priority: -42}
 
     test "list_todos/0 returns all todos" do
       todo = todo_fixture()
@@ -31,6 +32,17 @@ defmodule ExAssignment.TodosTest do
 
     test "create_todo/1 with invalid data returns error changeset" do
       assert {:error, %Ecto.Changeset{}} = Todos.create_todo(@invalid_attrs)
+    end
+
+    test "create_todo/1 with invalid priority returns error changeset" do
+      changeset = Todos.create_todo(@invalid_priority)
+
+      assert {:error, %Ecto.Changeset{}} = changeset
+      assert elem(changeset, 1).errors == [
+               priority:
+                 {"must be greater than or equal to %{number}",
+                  [validation: :number, kind: :greater_than_or_equal_to, number: 0]}
+             ]
     end
 
     test "update_todo/2 with valid data updates the todo" do
