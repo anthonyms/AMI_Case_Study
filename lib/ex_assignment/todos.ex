@@ -40,19 +40,6 @@ defmodule ExAssignment.Todos do
   end
 
   @doc """
-  Returns the next todo that is recommended to be done by the system.
-
-  ASSIGNMENT: ...
-  """
-  def get_recommended() do
-    list_todos(:open)
-    |> case do
-      [] -> nil
-      todos -> Enum.take_random(todos, 1) |> List.first()
-    end
-  end
-
-  @doc """
   Gets a single todo.
 
   Raises `Ecto.NoResultsError` if the Todo does not exist.
