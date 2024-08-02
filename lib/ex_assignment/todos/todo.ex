@@ -5,6 +5,7 @@ defmodule ExAssignment.Todos.Todo do
   schema "todos" do
     field(:done, :boolean, default: false)
     field(:priority, :integer)
+    field(:inverse_priority, :integer, virtual: true)
     field(:title, :string)
 
     timestamps()
