@@ -15,19 +15,22 @@ defmodule ExAssignment.Services.WeightBasedSampler do
   Accepts a map of items with their corresponding weights
     %{walk: 0.5, shop: 0.5, work: 0.1, gym: 0.2}
 
+  Returns an item from the list selected based on the weights.
+  Returns nil if provided with invalid input. The following input is considered invalid
+    1. -ve weight
+    2. 0 weight
+    3. non-numeric weight
+    4. empty map
 
-  Returns an item from the list selected based on the weights. Returns nil if provided with invalid input.
-  The sampler is not responsible for inverting the weights. Callers should ensure that the weights are already inverted.
+    The sampler is not responsible for inverting the weights. Callers should ensure that the weights are already inverted.
   """
-  def sample(items) when map_size(items) == 0 do
-    nil
-  end
-
   def sample(items) do
-    items
-    |> normalize_probabilities()
-    |> pick_random_by_weight()
-    |> elem(0)
+    with {:ok, items} <- validate_input(items),
+         item <- _sample(items) do
+      item
+    else
+      {:error, _reason} -> nil
+    end
   end
 
   @doc """
@@ -39,6 +42,24 @@ defmodule ExAssignment.Services.WeightBasedSampler do
   def normalize_probabilities(items) do
     sum_of_weights = Enum.reduce(items, 0, fn {_key, value}, acc -> acc + value end)
     Enum.reduce(items, %{}, fn {key, value}, acc -> Map.put(acc, key, value / sum_of_weights) end)
+  end
+
+  defp validate_input(items) do
+    cond do
+      !is_map(items) -> {:error, :non_map_input}
+      Enum.empty?(items) -> {:error, :empty_input}
+      Enum.any?(items, fn {_key, value} -> value == 0 end) -> {:error, :zero_weight}
+      Enum.any?(items, fn {_key, value} -> value < 0 end) -> {:error, :negative_weight}
+      Enum.any?(items, fn {_key, value} -> !is_number(value) end) -> {:error, :non_numeric_weight}
+      true -> {:ok, items}
+    end
+  end
+
+  defp _sample(items) do
+    items
+    |> normalize_probabilities()
+    |> pick_random_by_weight()
+    |> elem(0)
   end
 
   defp pick_random_by_weight(items) do
